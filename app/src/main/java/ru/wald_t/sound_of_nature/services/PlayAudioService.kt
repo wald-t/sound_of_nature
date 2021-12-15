@@ -5,14 +5,18 @@ import android.content.Intent
 import android.os.IBinder
 import org.fmod.FMOD
 import android.os.Binder
+import androidx.lifecycle.MutableLiveData
 import ru.wald_t.sound_of_nature.BuildConfig
 import ru.wald_t.sound_of_nature.dataModels.CityDataModel
+import ru.wald_t.sound_of_nature.dataModels.ControlDataModel
 import ru.wald_t.sound_of_nature.dataModels.CountryDataModel
 import ru.wald_t.sound_of_nature.dataModels.ForestDataModel
 
 class PlayAudioService : Service() {
     private val mBinder: IBinder = MyBinder()
-    private var event: String = ""
+    private var event: String = "Nothing"
+    private var isStarted = false
+    var liveData = MutableLiveData<ControlDataModel>()
 
     private val mThread = object : Thread(){
         override fun run() {
@@ -35,6 +39,7 @@ class PlayAudioService : Service() {
         FMOD.init(this)
         mThread.start()
         setStateCreate()
+        liveData.value = ControlDataModel(event, isStarted)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -52,43 +57,59 @@ class PlayAudioService : Service() {
     }
 
     fun setEvent(event: String) {
-        if (event != this.event){
+        if (event != this.event || !isStarted){
             when(event){
                 "Forest" -> {
                     setEventState(0, 1)
                     setEventState(1, 0)
                     setEventState(2, 0)
                     this.event = event
+                    isStarted = true
                 }
                 "Country" -> {
                     setEventState(0, 0)
                     setEventState(1, 1)
                     setEventState(2, 0)
                     this.event = event
+                    isStarted = true
                 }
                 "City" -> {
                     setEventState(0, 0)
                     setEventState(1, 0)
                     setEventState(2, 1)
                     this.event = event
+                    isStarted = true
                 }
             }
+            liveData.value = ControlDataModel(event, isStarted)
         }
 
     }
 
-    fun forestSetParameter(forestDataModel: ForestDataModel) {
+    fun stopEvent() {
+        setEventState(0, 0)
+        setEventState(1, 0)
+        setEventState(2, 0)
+        isStarted = false
+        liveData.value = ControlDataModel(event, isStarted)
+    }
+
+    fun startLastEvent() {
+        setEvent(event)
+    }
+
+    fun setParameter(forestDataModel: ForestDataModel) {
         forestSetParameter(
             forestDataModel.getRainFloat(),
             forestDataModel.getWindFloat(),
             forestDataModel.getCoverFloat())
     }
 
-    fun countrySetParameter(countryDataModel: CountryDataModel) {
+    fun setParameter(countryDataModel: CountryDataModel) {
         countrySetParameter(countryDataModel.getHourFloat())
     }
 
-    fun citySetParameter(cityDataModel: CityDataModel) {
+    fun setParameter(cityDataModel: CityDataModel) {
         citySetParameter(
             cityDataModel.getTrafficFloat(),
             cityDataModel.getWallaFloat())

@@ -67,7 +67,7 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun sendParametersToPlayAudioService() {
-        playAudio.forestSetParameter(forestDataModel)
+        playAudio.setParameter(forestDataModel)
     }
 
     private fun getParametersToJson(): String {

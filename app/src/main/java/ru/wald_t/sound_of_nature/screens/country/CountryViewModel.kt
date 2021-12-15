@@ -1,6 +1,6 @@
 package ru.wald_t.sound_of_nature.screens.country
 
-import android.R
+import android.R.layout.simple_list_item_1
 import android.app.Application
 import android.content.*
 import android.os.IBinder
@@ -13,7 +13,7 @@ import ru.wald_t.sound_of_nature.services.PlayAudioService
 
 class CountryViewModel(application: Application) : AndroidViewModel(application) {
     private val spinnerData = listOf("Night", "Morning", "Noon", "Evening")
-    private val adapter = ArrayAdapter(application, R.layout.simple_list_item_1, spinnerData)
+    private val adapter = ArrayAdapter(application, simple_list_item_1, spinnerData)
     private val app = application
     private var playAudio: PlayAudioService = PlayAudioService()
     private var countryDataModel = CountryDataModel()
@@ -53,7 +53,7 @@ class CountryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun sendParametersToPlayAudioService() {
-        playAudio.countrySetParameter(countryDataModel)
+        playAudio.setParameter(countryDataModel)
     }
 
     private fun getParametersToJson(): String {

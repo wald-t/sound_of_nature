@@ -54,7 +54,7 @@ class CityViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun sendParametersToPlayAudioService() {
-        playAudio.citySetParameter(cityDataModel)
+        playAudio.setParameter(cityDataModel)
     }
 
     private fun getParametersToJson(): String {
