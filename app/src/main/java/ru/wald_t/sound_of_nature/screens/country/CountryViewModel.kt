@@ -4,6 +4,7 @@ import android.R.layout.simple_list_item_1
 import android.app.Application
 import android.content.*
 import android.os.IBinder
+import android.support.v4.media.session.MediaControllerCompat
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.AndroidViewModel
@@ -16,31 +17,42 @@ class CountryViewModel(application: Application) : AndroidViewModel(application)
     private val adapter = ArrayAdapter(application, simple_list_item_1, spinnerData)
     private val app = application
     private var playAudio: PlayAudioService = PlayAudioService()
+    lateinit var playAudioServiceBinder: PlayAudioService.MyBinder
+    lateinit var mediaController: MediaControllerCompat
     private var countryDataModel = CountryDataModel()
     private var prefs: SharedPreferences = app.getSharedPreferences("Settings", Context.MODE_PRIVATE)
 
     private val mConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, binder: IBinder) {
-            playAudio = (binder as PlayAudioService.MyBinder).getService()
-            playAudio.setEvent("Country")
+            playAudioServiceBinder = (binder as PlayAudioService.MyBinder)
+            playAudio = playAudioServiceBinder.getService()
+            mediaController = MediaControllerCompat(application, playAudioServiceBinder.getMediaSessionToken())
+            playAudioServiceBinder.getService().setEvent("Country")
+            sendParametersToPlayAudioService()
+            mediaController.transportControls.play()
         }
 
-        override fun onServiceDisconnected(className: ComponentName) {}
+        override fun onServiceDisconnected(className: ComponentName) {
+            savePrefs()
+        }
+    }
+
+    init {
+        loadPrefs()
     }
 
     fun getAdapter() : ArrayAdapter<String> {
         return adapter
     }
 
-    init {
-        val json = prefs.getString("CountryParameters", null)
-        if (json != null) setParametersFromJson(json)
-        sendParametersToPlayAudioService()
-    }
-
-    fun savePrefs() {
+    private fun savePrefs() {
         val editor = prefs.edit()
         editor.putString("CountryParameters", getParametersToJson()).apply()
+    }
+
+    private fun loadPrefs() {
+        val json = prefs.getString("CountryParameters", null)
+        if (json != null) setParametersFromJson(json)
     }
 
     fun setHour(hour: Int) {
@@ -73,6 +85,7 @@ class CountryViewModel(application: Application) : AndroidViewModel(application)
 
     fun unbindService() {
         app.unbindService(mConnection)
+        savePrefs()
     }
 
 

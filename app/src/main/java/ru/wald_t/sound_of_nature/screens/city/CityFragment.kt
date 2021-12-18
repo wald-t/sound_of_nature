@@ -24,9 +24,6 @@ class CityFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(this)[CityViewModel::class.java]
 
-        cityParameterTraffic.progress = viewModel.getTraffic()
-        cityParameterWalla.progress = viewModel.getWalla()
-
         cityParameterTraffic.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -47,13 +44,13 @@ class CityFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.bindService()
-
+        cityParameterTraffic.progress = viewModel.getTraffic()
+        cityParameterWalla.progress = viewModel.getWalla()
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.unbindService()
-        viewModel.savePrefs()
     }
 
 }

@@ -25,7 +25,7 @@ class CountryFragment : Fragment() {
         viewModel = ViewModelProvider(this)[CountryViewModel::class.java]
 
         countrySpinner.adapter = viewModel.getAdapter()
-        countrySpinner.setSelection(viewModel.getHour())
+
         countrySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
             override fun onItemSelected(
                 parent: AdapterView<*>?,
@@ -45,12 +45,11 @@ class CountryFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.bindService()
-
+        countrySpinner.setSelection(viewModel.getHour())
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.unbindService()
-        viewModel.savePrefs()
     }
 }

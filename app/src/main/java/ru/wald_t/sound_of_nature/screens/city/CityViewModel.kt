@@ -3,6 +3,7 @@ package ru.wald_t.sound_of_nature.screens.city
 import android.app.Application
 import android.content.*
 import android.os.IBinder
+import android.support.v4.media.session.MediaControllerCompat
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.AndroidViewModel
 import com.google.gson.Gson
@@ -12,27 +13,38 @@ import ru.wald_t.sound_of_nature.services.PlayAudioService
 class CityViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application
     private var playAudio: PlayAudioService = PlayAudioService()
+    lateinit var playAudioServiceBinder: PlayAudioService.MyBinder
+    lateinit var mediaController: MediaControllerCompat
     private var cityDataModel = CityDataModel()
     private var prefs: SharedPreferences = app.getSharedPreferences("Settings", Context.MODE_PRIVATE)
 
     private val mConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, binder: IBinder) {
-            playAudio = (binder as PlayAudioService.MyBinder).getService()
+            playAudioServiceBinder = (binder as PlayAudioService.MyBinder)
+            playAudio = playAudioServiceBinder.getService()
+            mediaController = MediaControllerCompat(application, playAudioServiceBinder.getMediaSessionToken())
             playAudio.setEvent("City")
+            sendParametersToPlayAudioService()
+            mediaController.transportControls.play()
         }
 
-        override fun onServiceDisconnected(className: ComponentName) {}
+        override fun onServiceDisconnected(className: ComponentName) {
+            savePrefs()
+        }
     }
 
     init {
-        val json = prefs.getString("CityParameters", null)
-        if (json != null) setParametersFromJson(json)
-        sendParametersToPlayAudioService()
+        loadPrefs()
     }
 
-    fun savePrefs() {
+    private fun savePrefs() {
         val editor = prefs.edit()
         editor.putString("CityParameters", getParametersToJson()).apply()
+    }
+
+    private fun loadPrefs() {
+        val json = prefs.getString("CityParameters", null)
+        if (json != null) setParametersFromJson(json)
     }
 
     fun setTraffic(traffic: Int) {
@@ -74,5 +86,6 @@ class CityViewModel(application: Application) : AndroidViewModel(application) {
 
     fun unbindService() {
         app.unbindService(mConnection)
+        savePrefs()
     }
 }

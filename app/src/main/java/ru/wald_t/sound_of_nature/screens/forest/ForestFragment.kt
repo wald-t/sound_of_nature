@@ -24,10 +24,6 @@ class ForestFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(this)[ForestViewModel::class.java]
 
-        forestParameterRain.progress = viewModel.getRain()
-        forestParameterWind.progress = viewModel.getWind()
-        forestParameterCover.progress = viewModel.getCover()
-
         forestParameterRain.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -56,11 +52,13 @@ class ForestFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.bindService()
+        forestParameterRain.progress = viewModel.getRain()
+        forestParameterWind.progress = viewModel.getWind()
+        forestParameterCover.progress = viewModel.getCover()
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.unbindService()
-        viewModel.savePrefs()
     }
 }

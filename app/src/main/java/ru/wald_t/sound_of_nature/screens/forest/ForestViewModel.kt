@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.content.SharedPreferences
 import android.os.IBinder
+import android.support.v4.media.session.MediaControllerCompat
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.AndroidViewModel
 import com.google.gson.Gson
@@ -15,28 +16,39 @@ import ru.wald_t.sound_of_nature.services.PlayAudioService
 
 class ForestViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application
-    private var playAudio: PlayAudioService = PlayAudioService()
+    lateinit var playAudioServiceBinder: PlayAudioService.MyBinder
+    var playAudio = PlayAudioService()
+    lateinit var mediaController: MediaControllerCompat
     private var forestDataModel = ForestDataModel()
     private var prefs: SharedPreferences = app.getSharedPreferences("Settings", MODE_PRIVATE)
 
     private val mConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, binder: IBinder) {
-            playAudio = (binder as PlayAudioService.MyBinder).getService()
+            playAudioServiceBinder = (binder as PlayAudioService.MyBinder)
+            playAudio = playAudioServiceBinder.getService()
+            mediaController = MediaControllerCompat(application, playAudioServiceBinder.getMediaSessionToken())
             playAudio.setEvent("Forest")
+            sendParametersToPlayAudioService()
+            mediaController.transportControls.play()
         }
 
-        override fun onServiceDisconnected(className: ComponentName) {}
+        override fun onServiceDisconnected(className: ComponentName) {
+            savePrefs()
+        }
     }
 
     init {
-        val json = prefs.getString("ForestParameters", null)
-        if (json != null) setParametersFromJson(json)
-        sendParametersToPlayAudioService()
+        loadPrefs()
     }
 
-    fun savePrefs() {
+    private fun savePrefs() {
         val editor = prefs.edit()
         editor.putString("ForestParameters", getParametersToJson()).apply()
+    }
+
+    private fun loadPrefs() {
+        val json = prefs.getString("ForestParameters", null)
+        if (json != null) setParametersFromJson(json)
     }
 
     fun setRain(rain: Int) {
@@ -87,5 +99,6 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
 
     fun unbindService() {
         app.unbindService(mConnection)
+        savePrefs()
     }
 }
