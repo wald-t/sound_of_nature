@@ -63,12 +63,8 @@ int FMOD_Main()
     FMOD::Studio::EventInstance* forestInstance = NULL;
     ERRCHECK( forestDescription->createInstance(&forestInstance) );
 
-
-
     do
     {
-        printf("hello");
-
         if (Common_ParameterIsChanged(0)) {
             ERRCHECK(forestInstance->setParameterByName("Rain", Common_ForestGetRainParameter()));
             ERRCHECK(forestInstance->setParameterByName("Wind", Common_ForestGetWindParameter()));
@@ -106,7 +102,7 @@ int FMOD_Main()
         ERRCHECK( system->update() );
 
         Common_Sleep(50);
-    } while (!Common_BtnPress(BTN_QUIT));
+    } while (!Common_QuitState());
     
     ERRCHECK( sfxBank->unload() );
     ERRCHECK( stringsBank->unload() );

@@ -1,4 +1,4 @@
-package ru.wald_t.sound_of_nature.screens.control
+package ru.wald_t.sound_of_nature.screens.fragments.control
 
 import android.app.Application
 import android.content.*

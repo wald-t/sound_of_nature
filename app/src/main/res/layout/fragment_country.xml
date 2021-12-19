@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context=".screens.country.CountryFragment"
+    tools:context=".screens.fragments.country.CountryFragment"
     android:orientation="vertical">
 
     <TextView

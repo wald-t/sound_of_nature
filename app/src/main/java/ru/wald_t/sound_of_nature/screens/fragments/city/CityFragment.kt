@@ -1,4 +1,4 @@
-package ru.wald_t.sound_of_nature.screens.city
+package ru.wald_t.sound_of_nature.screens.fragments.city
 
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle

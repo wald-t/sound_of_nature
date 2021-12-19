@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context=".screens.forest.ForestFragment"
+    tools:context=".screens.fragments.forest.ForestFragment"
     android:orientation="vertical">
 
     <TextView

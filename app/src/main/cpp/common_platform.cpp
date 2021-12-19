@@ -3,7 +3,7 @@ FMOD Example Framework
 Copyright (c), Firelight Technologies Pty, Ltd 2013-2021.
 ==============================================================================*/
 #include "common.h"
-#include <string.h>
+#include <cstring>
 #include <jni.h>
 #include <unistd.h>
 #include <string>
@@ -11,14 +11,10 @@ Copyright (c), Firelight Technologies Pty, Ltd 2013-2021.
 
 JNIEnv *gJNIEnv;
 jobject gMainActivityObject;
-int gDownButtons;
-int gLastDownButtons;
-int gPressedButtons;
 bool gSuspendState;
 bool gQuitState;
 std::string gUIString;
 std::vector<char *> gPathList;
-
 
 // 0 - Rain, 1 - Wind, 2 - Cover
 float forestParameters[] = {0., 0., 0.};
@@ -33,11 +29,7 @@ int lastEventState;
 
 int FMOD_Main(); // Defined in example
 
-void Common_Init(void **extraDriverData)
-{
-	gDownButtons = 0;
-	gLastDownButtons = 0;
-	gPressedButtons = 0;
+void Common_Init(void **extraDriverData){
 	gSuspendState = false;
 	gQuitState = false;
 	countryParameter = 0;
@@ -46,8 +38,7 @@ void Common_Init(void **extraDriverData)
     lastEventState = -1;
 }
 
-void Common_Close()
-{
+void Common_Close(){
     for (std::vector<char *>::iterator item = gPathList.begin(); item != gPathList.end(); ++item)
     {
         free(*item);
@@ -56,36 +47,20 @@ void Common_Close()
     gPathList.clear();
 }
 
-void Common_Update()
-{
+void Common_Update(){
     parameterChangedState = 0;
     lastEventState = eventState;
-    if (gQuitState)
-    {
-    	gPressedButtons |= (1 << BTN_QUIT);
-    }
 }
 
-void Common_Sleep(unsigned int ms)
-{
+void Common_Sleep(unsigned int ms){
     usleep(ms * 1000);
 }
 
-void Common_Exit(int returnCode)
-{
+void Common_Exit(int returnCode){
     exit(returnCode);
 }
 
-void Common_DrawText(const char *text)
-{
-    char s[256];
-    snprintf(s, sizeof(s), "%s\n", text);
-
-    gUIString.append(s);
-}
-
-void Common_LoadFileMemory(const char *name, void **buff, int *length)
-{
+void Common_LoadFileMemory(const char *name, void **buff, int *length){
     FILE *file = fopen(name, "rb");
     
     fseek(file, 0, SEEK_END);
@@ -101,19 +76,12 @@ void Common_LoadFileMemory(const char *name, void **buff, int *length)
     *length = len;
 }
 
-void Common_UnloadFileMemory(void *buff)
-{
+void Common_UnloadFileMemory(void *buff){
     free(buff);
 }
 
-bool Common_BtnPress(Common_Button btn)
-{
-    return ((gPressedButtons & (1 << btn)) != 0);
-}
-
-bool Common_BtnDown(Common_Button btn)
-{
-    return ((gDownButtons & (1 << btn)) != 0);
+bool Common_QuitState(){
+    return gQuitState;
 }
 
 // 0 - Rain
@@ -160,24 +128,6 @@ bool Common_EventState(int event)
     return (eventState & (1 << event)) != 0;
 }
 
-const char *Common_BtnStr(Common_Button btn)
-{
-    switch (btn)
-    {
-        case BTN_ACTION1: return "A";
-        case BTN_ACTION2: return "B";
-        case BTN_ACTION3: return "C";
-        case BTN_ACTION4: return "D";
-        case BTN_UP:      return "Up";
-        case BTN_DOWN:    return "Down";
-        case BTN_LEFT:    return "Left";
-        case BTN_RIGHT:   return "Right";
-        case BTN_MORE:    return "E";
-        case BTN_QUIT:    return "Back";
-        default:          return "Unknown";
-    }
-}
-
 const char *Common_MediaPath(const char *fileName)
 {
     char *filePath = (char *)calloc(256, sizeof(char));
@@ -202,18 +152,12 @@ bool Common_SuspendState()
 extern "C"
 {
 
-jstring Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_getButtonLabel(JNIEnv *env, jobject thiz, jint index)
-{
-    return env->NewStringUTF(Common_BtnStr((Common_Button)index));
-}
-
 void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_forestSetParameter(
         JNIEnv *env,
         jobject thiz,
         jfloat rain,
         jfloat wind,
-        jfloat cover
-        )
+        jfloat cover)
 {
     forestParameters[0] = rain;
     forestParameters[1] = wind;
@@ -221,8 +165,7 @@ void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_forestSetParame
     parameterChangedState |= (1 << 0); // 0 - Forest state
 }
 
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_countrySetParameter(JNIEnv *env, jobject thiz, jfloat index)
-{
+void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_countrySetParameter(JNIEnv *env, jobject thiz, jfloat index){
     countryParameter = index;
     parameterChangedState |= (1 << 1); // 1 - Country state
 }
@@ -231,8 +174,7 @@ void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_citySetParamete
         JNIEnv *env,
         jobject thiz,
         jfloat traffic,
-        jfloat walla
-)
+        jfloat walla)
 {
     cityParameters[0] = traffic;
     cityParameters[1] = walla;
@@ -248,48 +190,27 @@ void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setEventState(J
     }
 }
 
-jint Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_getEventState(JNIEnv *env, jobject thiz){
-    return eventState;
-}
-
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_buttonDown(JNIEnv *env, jobject thiz, jint index)
-{
-    gDownButtons |= (1 << index);
-}
-
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_buttonUp(JNIEnv *env, jobject thiz, jint index)
-{
-    gDownButtons &= ~(1 << index);
-}
-
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateCreate(JNIEnv *env, jobject thiz)
-{
+void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateCreate(JNIEnv *env, jobject thiz){
 
 }
 
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateStart(JNIEnv *env, jobject thiz)
-{
+void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateStart(JNIEnv *env, jobject thiz){
 	gSuspendState = false;
 }
 
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateStop(JNIEnv *env, jobject thiz)
-{
+void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateStop(JNIEnv *env, jobject thiz){
 	gSuspendState = true;
 }
 
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateDestroy(JNIEnv *env, jobject thiz)
-{
+void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_setStateDestroy(JNIEnv *env, jobject thiz){
 	gQuitState = true;
 }
 
-void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_main(JNIEnv *env, jobject thiz)
-{
+void Java_ru_wald_1t_sound_1of_1nature_services_PlayAudioService_main(JNIEnv *env, jobject thiz){
 	gJNIEnv = env;
 	gMainActivityObject = thiz;
 
 	FMOD_Main();
 }
-
-
 
 } /* extern "C" */

@@ -1,4 +1,4 @@
-package ru.wald_t.sound_of_nature.screens.forest
+package ru.wald_t.sound_of_nature.screens.fragments.forest
 
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle

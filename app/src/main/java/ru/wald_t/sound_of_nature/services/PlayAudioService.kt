@@ -2,7 +2,11 @@ package ru.wald_t.sound_of_nature.services
 
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.media.AudioManager
 import android.media.session.PlaybackState
 import android.os.IBinder
 import org.fmod.FMOD
@@ -14,29 +18,31 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.session.MediaButtonReceiver
 import ru.wald_t.sound_of_nature.BuildConfig
-import ru.wald_t.sound_of_nature.activities.MainActivity
+import ru.wald_t.sound_of_nature.screens.MainActivity
 import ru.wald_t.sound_of_nature.dataModels.CityDataModel
 import ru.wald_t.sound_of_nature.dataModels.CountryDataModel
 import ru.wald_t.sound_of_nature.dataModels.ForestDataModel
 import ru.wald_t.sound_of_nature.notification.sendNotification
+import android.media.AudioAttributes
+
+import android.media.AudioFocusRequest
+import android.media.AudioManager.OnAudioFocusChangeListener
+
 
 class PlayAudioService : Service() {
     private val mBinder: IBinder = MyBinder()
     private var event: String = "Nothing"
-    val metadataBuilder = MediaMetadataCompat.Builder()
-    val stateBuilder: PlaybackStateCompat.Builder = PlaybackStateCompat.Builder()
-        .setActions(
-            PlaybackStateCompat.ACTION_PLAY
-                    or PlaybackStateCompat.ACTION_STOP
-                    or PlaybackStateCompat.ACTION_PAUSE
-                    or PlaybackStateCompat.ACTION_PLAY_PAUSE
-        )
 
+    lateinit var metadataBuilder: MediaMetadataCompat.Builder
+    lateinit var stateBuilder: PlaybackStateCompat.Builder
     lateinit var mediaSession: MediaSessionCompat
+    lateinit var audioManager: AudioManager
+    lateinit var audioFocusChangeListener: OnAudioFocusChangeListener
+    lateinit var becomingNoisyReceiver: BroadcastReceiver
 
     private val mThread = object : Thread(){
         override fun run() {
-            main()
+            main() //FMOD main()
         }
     }
 
@@ -55,6 +61,29 @@ class PlayAudioService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // for Change AudioFocus
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioFocusChangeListener =
+            OnAudioFocusChangeListener { focusChange ->
+                when(focusChange){
+                    AudioManager.AUDIOFOCUS_GAIN -> mediaSessionCallback.onPlay()
+                    else -> mediaSessionCallback.onPause()
+                }
+            }
+
+        // onPause() after unplug headphones
+        becomingNoisyReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent != null) {
+                    if (AudioManager.ACTION_AUDIO_BECOMING_NOISY == intent.action) {
+                        mediaSessionCallback.onPause()
+                    }
+                }
+            }
+        }
+
+        // for AudioService controlling
         mediaSession = MediaSessionCompat(this, "PlayAudioService")
         mediaSession.setCallback(mediaSessionCallback)
         val activityIntent = Intent(this, MainActivity::class.java)
@@ -68,10 +97,18 @@ class PlayAudioService : Service() {
             )
         }
 
+        metadataBuilder = MediaMetadataCompat.Builder()
         val metadata = metadataBuilder
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, event)
             .build()
         mediaSession.setMetadata(metadata)
+
+        stateBuilder = PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY
+                        or PlaybackStateCompat.ACTION_STOP
+                        or PlaybackStateCompat.ACTION_PAUSE
+            )
         mediaSession.setPlaybackState(
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED,
                 PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1F).build())
@@ -84,6 +121,29 @@ class PlayAudioService : Service() {
     private val mediaSessionCallback = object : MediaSessionCompat.Callback(){
         override fun onPlay() {
             super.onPlay()
+
+            //request Audio Focus
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioManager.requestAudioFocus(
+                    AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                .build()
+                        )
+                        .setAcceptsDelayedFocusGain(true)
+                        .setOnAudioFocusChangeListener(audioFocusChangeListener)
+                        .build()
+                )
+            } else {
+                audioManager.requestAudioFocus(
+                    audioFocusChangeListener,
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN
+                )
+            }
+
             startEvent()
             val metadata = metadataBuilder
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, event)
@@ -93,6 +153,12 @@ class PlayAudioService : Service() {
             mediaSession.setPlaybackState(
                 stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING,
                     PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1F).build())
+
+            //Stop after unplug headphones
+            registerReceiver(
+                becomingNoisyReceiver,
+                IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+            )
         }
 
         override fun onPause() {
@@ -105,6 +171,15 @@ class PlayAudioService : Service() {
                 stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED,
                     PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1F).build())
             pauseEvent()
+
+            //Abandon Audio Focus
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioManager.abandonAudioFocusRequest(AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build())
+            } else {
+                audioManager.abandonAudioFocus(audioFocusChangeListener)
+            }
+
+            unregisterReceiver(becomingNoisyReceiver)
         }
 
         override fun onStop() {
@@ -114,6 +189,15 @@ class PlayAudioService : Service() {
                 stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED,
                     PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1F).build())
             stopEvent()
+
+            //Abandon Audio Focus
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioManager.abandonAudioFocusRequest(AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build())
+            } else {
+                audioManager.abandonAudioFocus(audioFocusChangeListener)
+            }
+
+            unregisterReceiver(becomingNoisyReceiver)
         }
     }
 
@@ -212,11 +296,7 @@ class PlayAudioService : Service() {
     }
 
 
-    private external fun getEventState(): Int
     private external fun setEventState(event: Int, state: Int)
-    external fun getButtonLabel(index: Int): String?
-    external fun buttonDown(index: Int)
-    external fun buttonUp(index: Int)
     private external fun forestSetParameter(rain: Float, wind: Float, cover: Float)
     private external fun countrySetParameter(index: Float)
     private external fun citySetParameter(traffic: Float, walla: Float)

@@ -1,4 +1,4 @@
-package ru.wald_t.sound_of_nature.activities
+package ru.wald_t.sound_of_nature.screens
 
 import android.content.Intent
 import android.os.Bundle
@@ -18,12 +18,5 @@ class MainActivity : FragmentActivity() {
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
         navController = navHostFragment.navController
-        //Initializing PlayAudioService
-        startService(Intent(this, PlayAudioService::class.java))
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        stopService(Intent(this, PlayAudioService::class.java))
     }
 }

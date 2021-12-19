@@ -29,7 +29,7 @@
         </service>
 
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".screens.MainActivity"
             android:exported="true">
 
             <intent-filter>

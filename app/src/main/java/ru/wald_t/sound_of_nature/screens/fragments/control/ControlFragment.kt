@@ -1,4 +1,4 @@
-package ru.wald_t.sound_of_nature.screens.control
+package ru.wald_t.sound_of_nature.screens.fragments.control
 
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
@@ -9,7 +9,6 @@ import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.fragment_control.*
 import ru.wald_t.sound_of_nature.R
 

@@ -1,4 +1,4 @@
-package ru.wald_t.sound_of_nature.screens
+package ru.wald_t.sound_of_nature.screens.fragments
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import ru.wald_t.sound_of_nature.R
 import kotlinx.android.synthetic.main.fragment_main.*
-import ru.wald_t.sound_of_nature.activities.MainActivity
+import ru.wald_t.sound_of_nature.screens.MainActivity
 
 class MainFragment : Fragment() {
 

@@ -31,24 +31,9 @@ Copyright (c), Firelight Technologies Pty, Ltd 2012-2021.
     #define Common_vsnprintf vsnprintf
 #endif
 
-enum Common_Button
-{
-    BTN_ACTION1,
-    BTN_ACTION2,
-    BTN_ACTION3,
-    BTN_ACTION4,
-    BTN_LEFT,
-    BTN_RIGHT,
-    BTN_UP,
-    BTN_DOWN,
-    BTN_MORE,
-    BTN_QUIT
-};
-
 /* Cross platform functions (common) */
 void Common_Format(char *buffer, int bufferSize, const char *formatString...);
 void Common_Fatal(const char *format, ...);
-void Common_Draw(const char *format, ...);
 
 void ERRCHECK_fn(FMOD_RESULT result, const char *file, int line);
 #define ERRCHECK(_result) ERRCHECK_fn(_result, __FILE__, __LINE__)
@@ -62,11 +47,9 @@ void Common_Close();
 void Common_Update();
 void Common_Sleep(unsigned int ms);
 void Common_Exit(int returnCode);
-void Common_DrawText(const char *text);
 void Common_LoadFileMemory(const char *name, void **buff, int *length);
 void Common_UnloadFileMemory(void *buff);
-bool Common_BtnPress(Common_Button btn);
-bool Common_BtnDown(Common_Button btn);
+bool Common_QuitState();
 bool Common_ParameterIsChanged(int event);
 float Common_ForestGetRainParameter();
 float Common_ForestGetWindParameter();
@@ -76,7 +59,6 @@ float Common_CityGetTrafficParameter();
 float Common_CityGetWallaParameter();
 bool Common_EventIsChanged();
 bool Common_EventState(int event);
-const char *Common_BtnStr(Common_Button btn);
 const char *Common_MediaPath(const char *fileName);
 const char *Common_WritePath(const char *fileName);
 void Common_Mutex_Create(Common_Mutex *mutex);
