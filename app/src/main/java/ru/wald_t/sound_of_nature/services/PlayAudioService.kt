@@ -27,6 +27,7 @@ import android.media.AudioAttributes
 
 import android.media.AudioFocusRequest
 import android.media.AudioManager.OnAudioFocusChangeListener
+import java.lang.IllegalArgumentException
 
 
 class PlayAudioService : Service() {
@@ -179,7 +180,9 @@ class PlayAudioService : Service() {
                 audioManager.abandonAudioFocus(audioFocusChangeListener)
             }
 
-            unregisterReceiver(becomingNoisyReceiver)
+            try {
+                unregisterReceiver(becomingNoisyReceiver)
+            } catch (e: IllegalArgumentException) {}
         }
 
         override fun onStop() {
@@ -197,7 +200,9 @@ class PlayAudioService : Service() {
                 audioManager.abandonAudioFocus(audioFocusChangeListener)
             }
 
-            unregisterReceiver(becomingNoisyReceiver)
+            try {
+                unregisterReceiver(becomingNoisyReceiver)
+            } catch (e: IllegalArgumentException) {}
         }
     }
 
